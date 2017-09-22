@@ -14,7 +14,6 @@ impl Instructions {
     pub fn parse(&self, opcode: u16) -> Instruction {
         match opcode {
             0x1000 => Instruction::JP,
-            // 0x0 => Instruction::CLS,
             _ => Instruction::Unknown
         }
     }

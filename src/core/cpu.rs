@@ -65,10 +65,6 @@ impl Cpu {
                 let addr = self.instructions.parse_address(instr);
                 self.registers.pc = addr as u16;
             },
-            Instruction::CLS => {
-                // Clear
-                self.registers.pc += 2;
-            },
             _ => panic!("Unknown instruction: 0x{:X}", instr)
         }
     }

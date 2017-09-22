@@ -1,6 +1,3 @@
-extern crate byteorder;
-
-use self::byteorder::{ReadBytesExt, WriteBytesExt, BigEndian, LittleEndian};
 use std::fs::File;
 use std::io::Read;
 

@@ -1,5 +1,6 @@
 pub enum Instruction {
-    CLS,
     JP,
+    LdI,
+    LdV,
     Unknown
 }

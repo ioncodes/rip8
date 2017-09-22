@@ -29,17 +29,19 @@ pub struct Cpu {
     rom: Rom,
     keyboard: Keyboard,
     registers: Registers,
-    instructions: Instructions
+    instructions: Instructions,
+    debug: bool
 }
 
 impl Cpu {
-    pub fn new(rom: String) -> Cpu {
+    pub fn new(rom: String, debug: bool) -> Cpu {
         Cpu {
             ram: Ram::new(),
             rom: Rom::new(rom),
             keyboard: Keyboard::new(),
             registers: Registers::new(),
-            instructions: Instructions::new()
+            instructions: Instructions::new(),
+            debug
         }
     }
 
@@ -63,16 +65,31 @@ impl Cpu {
         match instruction {
             Instruction::JP => {
                 let addr = self.instructions.parse_address(instr);
+                if self.debug {
+                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, addr, 0);
+                    println!("{}", debug_info);
+                }
+
                 self.registers.jump(addr as u16);
             },
             Instruction::LdI => {
                 let addr = self.instructions.parse_address(instr);
+                if self.debug {
+                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, addr, 0);
+                    println!("{}", debug_info);
+                }
+
                 self.registers.i = addr;
                 self.registers.step();
             },
             Instruction::LdV => {
                 let x = self.instructions.parse_nibble(1, instr) as usize;
                 let value = self.instructions.parse_last(instr);
+                if self.debug {
+                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, value);
+                    println!("{}", debug_info);
+                }
+
                 self.registers.v[x] = value;
                 self.registers.step();
             },

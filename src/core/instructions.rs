@@ -42,6 +42,16 @@ impl Instructions {
             panic!("Nibble out of range.");
         }
 
-        (opcode & mult) as u8
+        ((opcode & mult) >> 8) as u8
+    }
+
+    // Get instruction details
+    pub fn get_debug_info(&self, instruction: Instruction, pc: u16, address: u16, value: u8) -> String {
+        match instruction {
+            Instruction::JP => format!("0x{:X}: JP #{:X}", pc, address),
+            Instruction::LdI => format!("0x{:X}: LD I, #{:X}", pc, value),
+            Instruction::LdV => format!("0x{:X}: LD {:X}, #{:X}", pc, address, value),
+            _ => format!("{}: Unknown", pc)
+        }
     }
 }

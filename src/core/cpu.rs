@@ -63,15 +63,18 @@ impl Cpu {
         match instruction {
             Instruction::JP => {
                 let addr = self.instructions.parse_address(instr);
-                self.registers.pc = addr as u16;
+                self.registers.jump(addr as u16);
             },
             Instruction::LdI => {
                 let addr = self.instructions.parse_address(instr);
                 self.registers.i = addr;
-                self.registers.pc += 2;
+                self.registers.step();
             },
             Instruction::LdV => {
-
+                let x = self.instructions.parse_nibble(1, instr) as usize;
+                let value = self.instructions.parse_last(instr);
+                self.registers.v[x] = value;
+                self.registers.step();
             },
             _ => panic!("Unknown instruction: 0x{:X}", instr)
         }

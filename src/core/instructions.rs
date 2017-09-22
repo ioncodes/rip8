@@ -25,7 +25,7 @@ impl Instructions {
     }
 
     pub fn parse_last(&self, opcode: u16) -> u8 {
-        opcode & 0x00FF
+        (opcode & 0x00FF) as u8
     }
 
     pub fn parse_nibble(&self, nibble: u8, opcode: u16) -> u8 {
@@ -42,6 +42,6 @@ impl Instructions {
             panic!("Nibble out of range.");
         }
 
-        opcode & mult
+        (opcode & mult) as u8
     }
 }

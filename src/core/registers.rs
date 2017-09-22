@@ -22,4 +22,12 @@ impl Registers {
             stack: [0; 16]
         }
     }
+
+    pub fn step(&mut self) {
+        self.pc += 2; // each instruction has 2 bytes
+    }
+
+    pub fn jump(&mut self, address: u16) {
+        self.pc = address;
+    }
 }

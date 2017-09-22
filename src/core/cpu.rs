@@ -1,3 +1,5 @@
+use std::io::*;
+
 use super::ram::Ram;
 use super::rom::Rom;
 use super::keyboard::Keyboard;
@@ -30,18 +32,20 @@ pub struct Cpu {
     keyboard: Keyboard,
     registers: Registers,
     instructions: Instructions,
-    debug: bool
+    debug: bool,
+    step: bool
 }
 
 impl Cpu {
-    pub fn new(rom: String, debug: bool) -> Cpu {
+    pub fn new(rom: String, debug: bool, step: bool) -> Cpu {
         Cpu {
             ram: Ram::new(),
             rom: Rom::new(rom),
             keyboard: Keyboard::new(),
             registers: Registers::new(),
             instructions: Instructions::new(),
-            debug
+            debug,
+            step
         }
     }
 
@@ -59,6 +63,10 @@ impl Cpu {
     }
 
     pub fn tick(&mut self) {
+        if self.step {
+            // todo: find a way to discard the newline
+            let _ = stdin().read(&mut [0u8]).unwrap();
+        }
         let instr = self.ram.read(self.registers.pc as usize);
         let opcode = instr & 0xF000;
         let instruction = self.instructions.parse(opcode);

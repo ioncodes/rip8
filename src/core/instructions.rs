@@ -48,7 +48,7 @@ impl Instructions {
     // Get instruction details
     pub fn get_debug_info(&self, instruction: Instruction, pc: u16, address: u16, value: u8) -> String {
         match instruction {
-            Instruction::JP => format!("0x{:x}: jp #{:x}", pc, address),
+            Instruction::JP  => format!("0x{:x}: jp #{:x}", pc, address),
             Instruction::LdI => format!("0x{:x}: ld I, #{:x}", pc, value),
             Instruction::LdV => format!("0x{:x}: ld {:x}, #{:x}", pc, address, value),
             _ => format!("0x{:x}: Unknown", pc)

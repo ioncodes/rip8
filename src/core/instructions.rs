@@ -20,6 +20,6 @@ impl Instructions {
     }
 
     pub fn parse_address(&self, opcode: u16) -> u16 {
-        opcode & 0xF000
+        opcode & 0x0FFF
     }
 }

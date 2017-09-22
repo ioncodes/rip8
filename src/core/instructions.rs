@@ -50,7 +50,7 @@ impl Instructions {
         match instruction {
             Instruction::JP => format!("0x{:x}: jp #{:x}", pc, address),
             Instruction::LdI => format!("0x{:x}: ld I, #{:x}", pc, value),
-            Instruction::LdV => format!("0x{:x}: ld {:X}, #{:x}", pc, address, value),
+            Instruction::LdV => format!("0x{:x}: ld {:x}, #{:x}", pc, address, value),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

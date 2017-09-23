@@ -3,5 +3,6 @@ pub enum Instruction {
     LdI,
     LdV,
     DRW,
+    ADD,
     Unknown
 }

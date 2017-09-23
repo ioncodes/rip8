@@ -68,7 +68,10 @@ impl Cpu {
             let _ = stdin().read(&mut [0u8]).unwrap();
         }
         let instr = self.ram.read(self.registers.pc as usize);
-        let opcode = instr & 0xF000;
+        let mut opcode = instr & 0xF000;
+        if opcode == 0xF000 {
+            opcode = instr & 0xF0FF; // CHIP8 has a series of opcodes which start with F, hence preserving the last byte make them identifiable.
+        }
         let instruction = self.instructions.parse(opcode);
         match instruction {
             Instruction::JP => {
@@ -110,6 +113,16 @@ impl Cpu {
                     println!("{}", debug_info);
                 }
                 // todo: implement drawing and storing
+                self.registers.step();
+            },
+            Instruction::ADD => {
+                let x = self.instructions.parse_nibble(1, instr) as u16;
+                if self.debug {
+                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x, 0, 0);
+                    println!("{}", debug_info);
+                }
+
+                self.registers.i += x;
                 self.registers.step();
             },
             _ => panic!("Unknown instruction: 0x{:X}", instr)

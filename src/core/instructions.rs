@@ -17,6 +17,7 @@ impl Instructions {
             0xA000 => Instruction::LdI,
             0x6000 => Instruction::LdV,
             0xD000 => Instruction::DRW,
+            0xF01E => Instruction::ADD,
             _ => Instruction::Unknown
         }
     }
@@ -51,6 +52,7 @@ impl Instructions {
             Instruction::LdI => format!("0x{:x}: ld I, #{:x}", pc, v1),
             Instruction::LdV => format!("0x{:x}: ld V{:x}, #{:x}", pc, v1, v2),
             Instruction::DRW => format!("0x{:x}: drw V{:x}, V{:x}, #{:x}", pc, v1, v2, v3),
+            Instruction::ADD => format!("0x{:x}: add I, V{:x}", pc, v1),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

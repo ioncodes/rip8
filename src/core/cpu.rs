@@ -101,6 +101,17 @@ impl Cpu {
                 self.registers.v[x] = value;
                 self.registers.step();
             },
+            Instruction::DRW => {
+                let x = self.instructions.parse_nibble(1, instr) as usize;
+                let y = self.instructions.parse_nibble(2, instr) as usize;
+                let n = self.instructions.parse_nibble(3, instr) as usize;
+                if self.debug {
+                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, y as u16, n as u16);
+                    println!("{}", debug_info);
+                }
+                // todo: implement drawing and storing
+                self.registers.step();
+            },
             _ => panic!("Unknown instruction: 0x{:X}", instr)
         }
     }

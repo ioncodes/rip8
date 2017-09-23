@@ -32,18 +32,16 @@ impl Instructions {
     pub fn parse_nibble(&self, nibble: u8, opcode: u16) -> u8 {
         let mut mult = 0x0000; // todo: rename this
         if nibble == 0 {
-            mult = 0xF000;
+            (opcode & 0xF000) as u8
         } else if nibble == 1 {
-            mult = 0x0F00;
+            ((opcode & 0x0F00) >> 8) as u8
         } else if nibble == 2 {
-            mult = 0x00F0;
+            ((opcode & 0x00F0) >> 4) as u8
         } else if nibble == 3{
-            mult = 0x000F;
+            (opcode & 0x000F) as u8
         } else {
             panic!("Nibble out of range.");
         }
-
-        ((opcode & mult) >> 8) as u8
     }
 
     // Get instruction details

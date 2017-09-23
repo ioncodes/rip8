@@ -18,4 +18,8 @@ impl Keyboard {
         let index = usize::from_str_radix(&key, 16).unwrap();
         self.keyboard[index] = false;
     }
+
+    pub fn pressed(&self, key: u8) -> bool {
+        self.keyboard[key as usize]
+    }
 }

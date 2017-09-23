@@ -77,12 +77,14 @@ impl Cpu {
         let instruction = self.instructions.parse(opcode);
         match instruction {
             Instruction::JP => {
+                // Jump to address
                 let addr = self.instructions.parse_address(instr);
                 self.print_debug_info(instruction, self.registers.pc, addr, 0, 0);
 
                 self.registers.jump(addr as u16);
             },
             Instruction::LdI => {
+                // set index register to address
                 let addr = self.instructions.parse_address(instr);
                 self.print_debug_info(instruction, self.registers.pc, addr, 0, 0);
 
@@ -90,6 +92,7 @@ impl Cpu {
                 self.registers.step();
             },
             Instruction::LdV => {
+                // set Vx to value
                 let x = self.instructions.parse_nibble(1, instr) as usize;
                 let value = self.instructions.parse_last(instr);
                 self.print_debug_info(instruction, self.registers.pc, x as u16, value as u16, 0);
@@ -98,14 +101,17 @@ impl Cpu {
                 self.registers.step();
             },
             Instruction::DRW => {
+                // set pixels
                 let x = self.instructions.parse_nibble(1, instr) as usize;
                 let y = self.instructions.parse_nibble(2, instr) as usize;
                 let n = self.instructions.parse_nibble(3, instr) as usize;
                 self.print_debug_info(instruction, self.registers.pc, x as u16, y as u16, n as u16);
                 // todo: implement drawing and storing
+
                 self.registers.step();
             },
             Instruction::AddI => {
+                // add x to I
                 let x = self.instructions.parse_nibble(1, instr) as u16;
                 self.print_debug_info(instruction, self.registers.pc, x, 0, 0);
 
@@ -113,6 +119,7 @@ impl Cpu {
                 self.registers.step();
             },
             Instruction::AddX => {
+                // add byte to Vx
                 let x = self.instructions.parse_nibble(1, instr);
                 let byte = self.instructions.parse_last(instr);
                 self.print_debug_info(instruction, self.registers.pc, x as u16, byte as u16, 0);
@@ -121,6 +128,7 @@ impl Cpu {
                 self.registers.step();
             },
             Instruction::SeX => {
+                // skip if Vx equals byte
                 let x = self.instructions.parse_nibble(1, instr);
                 let byte = self.instructions.parse_last(instr);
                 self.print_debug_info(instruction, self.registers.pc, x as u16, byte as u16, 0);
@@ -133,6 +141,7 @@ impl Cpu {
                 self.registers.step();
             },
             Instruction::SeXY => {
+                // skip if Vx equals Vy
                 let x = self.instructions.parse_nibble(1, instr);
                 let y = self.instructions.parse_nibble(2, instr);
                 self.print_debug_info(instruction, self.registers.pc, x as u16, y as u16, 0);
@@ -144,6 +153,18 @@ impl Cpu {
                     self.registers.step();
                 }
                 self.registers.step();
+            },
+            Instruction::LdXK => {
+                // wait for keypress, store in Vx
+                for i in 0..self.keyboard.keyboard.len() {
+                    if self.keyboard.pressed(i as u8) {
+                        let x = self.instructions.parse_nibble(1, instr);
+                        self.print_debug_info(instruction, self.registers.pc, x as u16, 0, 0); // todo: move this out of the if
+
+                        self.registers.v[x as usize] = i as u8;
+                        self.registers.step();
+                    }
+                }
             },
             _ => panic!("Unknown instruction: 0x{:X}", instr)
         }

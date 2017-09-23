@@ -16,6 +16,7 @@ impl Instructions {
             0x1000 => Instruction::JP,
             0xA000 => Instruction::LdI,
             0x6000 => Instruction::LdV,
+            0xD000 => Instruction::DRW,
             _ => Instruction::Unknown
         }
     }
@@ -46,11 +47,12 @@ impl Instructions {
     }
 
     // Get instruction details
-    pub fn get_debug_info(&self, instruction: Instruction, pc: u16, address: u16, value: u8) -> String {
+    pub fn get_debug_info(&self, instruction: Instruction, pc: u16, v1: u16, v2: u16, v3: u16) -> String {
         match instruction {
-            Instruction::JP  => format!("0x{:x}: jp #{:x}", pc, address),
-            Instruction::LdI => format!("0x{:x}: ld I, #{:x}", pc, value),
-            Instruction::LdV => format!("0x{:x}: ld {:x}, #{:x}", pc, address, value),
+            Instruction::JP  => format!("0x{:x}: jp #{:x}", pc, v1),
+            Instruction::LdI => format!("0x{:x}: ld I, #{:x}", pc, v1),
+            Instruction::LdV => format!("0x{:x}: ld V{:x}, #{:x}", pc, v1, v2),
+            Instruction::DRW => format!("0x{:x}: drw V{:x}, V{:x}, #{:x}", pc, v1, v2, v3),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

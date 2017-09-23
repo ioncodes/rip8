@@ -74,7 +74,7 @@ impl Cpu {
             Instruction::JP => {
                 let addr = self.instructions.parse_address(instr);
                 if self.debug {
-                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, addr, 0);
+                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, addr, 0, 0);
                     println!("{}", debug_info);
                 }
 
@@ -83,7 +83,7 @@ impl Cpu {
             Instruction::LdI => {
                 let addr = self.instructions.parse_address(instr);
                 if self.debug {
-                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, addr, 0);
+                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, addr, 0, 0);
                     println!("{}", debug_info);
                 }
 
@@ -94,7 +94,7 @@ impl Cpu {
                 let x = self.instructions.parse_nibble(1, instr) as usize;
                 let value = self.instructions.parse_last(instr);
                 if self.debug {
-                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, value);
+                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, value as u16, 0);
                     println!("{}", debug_info);
                 }
 

@@ -1,4 +1,5 @@
 use std::io::{self, Read, Write, BufRead};
+use std::process;
 
 use super::ram::Ram;
 use super::rom::Rom;
@@ -34,10 +35,12 @@ pub struct Cpu {
     instructions: Instructions,
     debug: bool,
     interactive: bool,
+    test: bool,
+    test_pc: u16
 }
 
 impl Cpu {
-    pub fn new(rom: String, debug: bool, interactive: bool) -> Cpu {
+    pub fn new(rom: String, debug: bool, interactive: bool, test: bool, test_pc: u16) -> Cpu {
         Cpu {
             ram: Ram::new(),
             rom: Rom::new(rom),
@@ -46,6 +49,8 @@ impl Cpu {
             instructions: Instructions::new(),
             debug,
             interactive,
+            test,
+            test_pc
         }
     }
 
@@ -69,7 +74,7 @@ impl Cpu {
             let mut buffer = String::new();
             let stdin = io::stdin();
             stdin.lock().read_line(&mut buffer).expect("Could not read line.");
-            buffer = buffer.trim_right_matches("\r\n");
+            buffer = buffer.trim_right_matches("\r\n").to_string();
             if buffer == "dump" {
                 println!("{:#?}", self.registers);
                 return;
@@ -77,6 +82,11 @@ impl Cpu {
                 println!("{}", "dump: dump registers");
                 println!("{}", "help: this message");
                 println!("{}", "anything else: step into");
+            }
+        } else if self.test {
+            if self.registers.pc == self.test_pc {
+                println!("{:#?}", self.registers);
+                process::exit(1337);
             }
         }
         let instr = self.ram.read(self.registers.pc as usize);

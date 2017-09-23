@@ -1,4 +1,4 @@
-use std::io::*;
+use std::io::{self, Read, Write, BufRead};
 
 use super::ram::Ram;
 use super::rom::Rom;
@@ -33,11 +33,11 @@ pub struct Cpu {
     registers: Registers,
     instructions: Instructions,
     debug: bool,
-    step: bool
+    interactive: bool,
 }
 
 impl Cpu {
-    pub fn new(rom: String, debug: bool, step: bool) -> Cpu {
+    pub fn new(rom: String, debug: bool, interactive: bool) -> Cpu {
         Cpu {
             ram: Ram::new(),
             rom: Rom::new(rom),
@@ -45,7 +45,7 @@ impl Cpu {
             registers: Registers::new(),
             instructions: Instructions::new(),
             debug,
-            step
+            interactive,
         }
     }
 
@@ -63,9 +63,21 @@ impl Cpu {
     }
 
     pub fn tick(&mut self) {
-        if self.step {
-            // todo: find a way to discard the newline
-            let _ = stdin().read(&mut [0u8]).unwrap();
+        if self.interactive {
+            io::stdout().write("$ ".as_bytes());
+            io::stdout().flush();
+            let mut buffer = String::new();
+            let stdin = io::stdin();
+            stdin.lock().read_line(&mut buffer).expect("Could not read line.");
+            buffer = buffer.trim_right_matches("\r\n");
+            if buffer == "dump" {
+                println!("{:#?}", self.registers);
+                return;
+            } else if buffer == "help" {
+                println!("{}", "dump: dump registers");
+                println!("{}", "help: this message");
+                println!("{}", "anything else: step into");
+            }
         }
         let instr = self.ram.read(self.registers.pc as usize);
         let mut opcode = instr & 0xF000;

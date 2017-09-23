@@ -1,5 +1,6 @@
 const START_ADDRESS: u16 = 0x200; // todo: might also be 0x600
 
+#[derive(Debug)]
 pub struct Registers {
     pub pc: u16,
     pub sp: u8,

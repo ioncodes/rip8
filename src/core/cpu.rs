@@ -151,6 +151,22 @@ impl Cpu {
                 }
                 self.registers.step();
             },
+            Instruction::SeXY => {
+                let x = self.instructions.parse_nibble(1, instr);
+                let y = self.instructions.parse_nibble(2, instr);
+                if self.debug {
+                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, y as u16, 0);
+                    println!("{}", debug_info);
+                }
+
+                let vx = self.registers.v[x as usize];
+                let vy = self.registers.v[y as usize];
+
+                if vx == vy {
+                    self.registers.step();
+                }
+                self.registers.step();
+            },
             _ => panic!("Unknown instruction: 0x{:X}", instr)
         }
     }

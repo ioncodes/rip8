@@ -68,27 +68,7 @@ impl Cpu {
     }
 
     pub fn tick(&mut self) {
-        if self.interactive {
-            io::stdout().write("$ ".as_bytes());
-            io::stdout().flush();
-            let mut buffer = String::new();
-            let stdin = io::stdin();
-            stdin.lock().read_line(&mut buffer).expect("Could not read line.");
-            buffer = buffer.trim_right_matches("\r\n").to_string();
-            if buffer == "dump" {
-                println!("{:#?}", self.registers);
-                return;
-            } else if buffer == "help" {
-                println!("{}", "dump: dump registers");
-                println!("{}", "help: this message");
-                println!("{}", "anything else: step into");
-            }
-        } else if self.test {
-            if self.registers.pc == self.test_pc {
-                println!("{:#?}", self.registers);
-                process::exit(1337);
-            }
-        }
+        self.process_debugger();
         let instr = self.ram.read(self.registers.pc as usize);
         let mut opcode = instr & 0xF000;
         if opcode == 0xF000 {
@@ -190,6 +170,30 @@ impl Cpu {
                 self.registers.step();
             },
             _ => panic!("Unknown instruction: 0x{:X}", instr)
+        }
+    }
+
+    fn process_debugger(&self) {
+        if self.interactive {
+            io::stdout().write("$ ".as_bytes());
+            io::stdout().flush();
+            let mut buffer = String::new();
+            let stdin = io::stdin();
+            stdin.lock().read_line(&mut buffer).expect("Could not read line.");
+            buffer = buffer.trim_right_matches("\r\n").to_string();
+            if buffer == "dump" {
+                println!("{:#?}", self.registers);
+                return;
+            } else if buffer == "help" {
+                println!("{}", "dump: dump registers");
+                println!("{}", "help: this message");
+                println!("{}", "anything else: step into");
+            }
+        } else if self.test {
+            if self.registers.pc == self.test_pc {
+                println!("{:#?}", self.registers);
+                process::exit(1337);
+            }
         }
     }
 }

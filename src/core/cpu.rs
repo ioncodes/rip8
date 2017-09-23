@@ -78,19 +78,13 @@ impl Cpu {
         match instruction {
             Instruction::JP => {
                 let addr = self.instructions.parse_address(instr);
-                if self.debug {
-                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, addr, 0, 0);
-                    println!("{}", debug_info);
-                }
+                self.print_debug_info(instruction, self.registers.pc, addr, 0, 0);
 
                 self.registers.jump(addr as u16);
             },
             Instruction::LdI => {
                 let addr = self.instructions.parse_address(instr);
-                if self.debug {
-                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, addr, 0, 0);
-                    println!("{}", debug_info);
-                }
+                self.print_debug_info(instruction, self.registers.pc, addr, 0, 0);
 
                 self.registers.i = addr;
                 self.registers.step();
@@ -98,10 +92,7 @@ impl Cpu {
             Instruction::LdV => {
                 let x = self.instructions.parse_nibble(1, instr) as usize;
                 let value = self.instructions.parse_last(instr);
-                if self.debug {
-                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, value as u16, 0);
-                    println!("{}", debug_info);
-                }
+                self.print_debug_info(instruction, self.registers.pc, x as u16, value as u16, 0);
 
                 self.registers.v[x] = value;
                 self.registers.step();
@@ -110,19 +101,13 @@ impl Cpu {
                 let x = self.instructions.parse_nibble(1, instr) as usize;
                 let y = self.instructions.parse_nibble(2, instr) as usize;
                 let n = self.instructions.parse_nibble(3, instr) as usize;
-                if self.debug {
-                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, y as u16, n as u16);
-                    println!("{}", debug_info);
-                }
+                self.print_debug_info(instruction, self.registers.pc, x as u16, y as u16, n as u16);
                 // todo: implement drawing and storing
                 self.registers.step();
             },
             Instruction::AddI => {
                 let x = self.instructions.parse_nibble(1, instr) as u16;
-                if self.debug {
-                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x, 0, 0);
-                    println!("{}", debug_info);
-                }
+                self.print_debug_info(instruction, self.registers.pc, x, 0, 0);
 
                 self.registers.i += x;
                 self.registers.step();
@@ -130,10 +115,7 @@ impl Cpu {
             Instruction::AddX => {
                 let x = self.instructions.parse_nibble(1, instr);
                 let byte = self.instructions.parse_last(instr);
-                if self.debug {
-                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, byte as u16, 0);
-                    println!("{}", debug_info);
-                }
+                self.print_debug_info(instruction, self.registers.pc, x as u16, byte as u16, 0);
 
                 self.registers.v[x as usize] += byte;
                 self.registers.step();
@@ -141,10 +123,7 @@ impl Cpu {
             Instruction::SeX => {
                 let x = self.instructions.parse_nibble(1, instr);
                 let byte = self.instructions.parse_last(instr);
-                if self.debug {
-                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, byte as u16, 0);
-                    println!("{}", debug_info);
-                }
+                self.print_debug_info(instruction, self.registers.pc, x as u16, byte as u16, 0);
 
                 let vx = self.registers.v[x as usize];
 
@@ -156,10 +135,7 @@ impl Cpu {
             Instruction::SeXY => {
                 let x = self.instructions.parse_nibble(1, instr);
                 let y = self.instructions.parse_nibble(2, instr);
-                if self.debug {
-                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, y as u16, 0);
-                    println!("{}", debug_info);
-                }
+                self.print_debug_info(instruction, self.registers.pc, x as u16, y as u16, 0);
 
                 let vx = self.registers.v[x as usize];
                 let vy = self.registers.v[y as usize];
@@ -170,6 +146,13 @@ impl Cpu {
                 self.registers.step();
             },
             _ => panic!("Unknown instruction: 0x{:X}", instr)
+        }
+    }
+
+    fn print_debug_info(&self, instruction: Instruction, pc: u16, v1: u16, v2: u16, v3: u16) {
+        if self.debug {
+            let debug_info = self.instructions.get_debug_info(instruction, pc, v1, v2, v3);
+            println!("{}", debug_info);
         }
     }
 

@@ -3,6 +3,9 @@ pub enum Instruction {
     LdI,
     LdV,
     DRW,
-    ADD,
+    AddI,
+    AddX,
+    SeX,    // swiggity swooty,
+    SeXY,   // i'm coming for that booty.
     Unknown
 }

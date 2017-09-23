@@ -17,7 +17,10 @@ impl Instructions {
             0xA000 => Instruction::LdI,
             0x6000 => Instruction::LdV,
             0xD000 => Instruction::DRW,
-            0xF01E => Instruction::ADD,
+            0xF01E => Instruction::AddI,
+            0x7000 => Instruction::AddX,
+            0x3000 => Instruction::SeX,
+            0x5000 => Instruction::SeXY,
             _ => Instruction::Unknown
         }
     }
@@ -31,7 +34,6 @@ impl Instructions {
     }
 
     pub fn parse_nibble(&self, nibble: u8, opcode: u16) -> u8 {
-        let mut mult = 0x0000; // todo: rename this
         if nibble == 0 {
             (opcode & 0xF000) as u8
         } else if nibble == 1 {
@@ -52,7 +54,10 @@ impl Instructions {
             Instruction::LdI => format!("0x{:x}: ld I, #{:x}", pc, v1),
             Instruction::LdV => format!("0x{:x}: ld V{:x}, #{:x}", pc, v1, v2),
             Instruction::DRW => format!("0x{:x}: drw V{:x}, V{:x}, #{:x}", pc, v1, v2, v3),
-            Instruction::ADD => format!("0x{:x}: add I, V{:x}", pc, v1),
+            Instruction::AddI => format!("0x{:x}: add I, V{:x}", pc, v1),
+            Instruction::AddX => format!("0x{:x}: add V{:x}, #{:x}", pc, v1, v2),
+            Instruction::SeX => format!("0x{:x}: se V{:x}, #{:x}", pc, v1, v2),
+            Instruction::SeXY => format!("0x{:x}: se V{:x}, V{:x}", pc, v1, v2),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

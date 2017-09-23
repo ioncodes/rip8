@@ -115,7 +115,7 @@ impl Cpu {
                 // todo: implement drawing and storing
                 self.registers.step();
             },
-            Instruction::ADD => {
+            Instruction::AddI => {
                 let x = self.instructions.parse_nibble(1, instr) as u16;
                 if self.debug {
                     let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x, 0, 0);
@@ -123,6 +123,32 @@ impl Cpu {
                 }
 
                 self.registers.i += x;
+                self.registers.step();
+            },
+            Instruction::AddX => {
+                let x = self.instructions.parse_nibble(1, instr);
+                let byte = self.instructions.parse_last(instr);
+                if self.debug {
+                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, byte as u16, 0);
+                    println!("{}", debug_info);
+                }
+
+                self.registers.v[x as usize] += byte;
+                self.registers.step();
+            },
+            Instruction::SeX => {
+                let x = self.instructions.parse_nibble(1, instr);
+                let byte = self.instructions.parse_last(instr);
+                if self.debug {
+                    let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, x as u16, byte as u16, 0);
+                    println!("{}", debug_info);
+                }
+
+                let vx = self.registers.v[x as usize];
+
+                if vx == byte {
+                    self.registers.step();
+                }
                 self.registers.step();
             },
             _ => panic!("Unknown instruction: 0x{:X}", instr)

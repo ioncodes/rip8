@@ -5,3 +5,4 @@ authors = ["ion <ionix@protonmail.com>"]
 
 [dependencies]
 minifb = "0.10.0"
+rand = "0.3"

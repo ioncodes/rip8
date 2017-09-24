@@ -28,6 +28,14 @@ impl Instructions {
             0x8000 => Instruction::LdXY,
             0x8006 => Instruction::SHR,
             0xF033 => Instruction::LdB,
+            0xF065 => Instruction::LdXI,
+            0xF029 => Instruction::LdF,
+            0xC000 => Instruction::RND,
+            0x8004 => Instruction::AddXY,
+            0xE09E => Instruction::SKP,
+            0xE0A1 => Instruction::SKNP,
+            0xF015 => Instruction::LdDT,
+            0xF018 => Instruction::LdST,
             _ => Instruction::Unknown
         }
     }
@@ -72,6 +80,14 @@ impl Instructions {
             Instruction::LdXY => format!("0x{:x}: ld V{:x}, V{:x}", pc, v1, v2),
             Instruction::SHR => format!("0x{:x}: shr V{:x}", pc, v1),
             Instruction::LdB => format!("0x{:x}: ld B, V{:x}", pc, v1),
+            Instruction::LdXI => format!("0x{:x}: ld V{:x}, [I]", pc, v1),
+            Instruction::LdF => format!("0x{:x}: ld F, V{:x}", pc, v1),
+            Instruction::RND => format!("0x{:x}: rnd V{:x}, #{:x}", pc, v1, v2),
+            Instruction::AddXY => format!("0x{:x}: add V{:x}, V{:x}", pc, v1, v2),
+            Instruction::SKP => format!("0x{:x}: skp V{:x}", pc, v1),
+            Instruction::SKNP => format!("0x{:x}: sknp V{:x}", pc, v1),
+            Instruction::LdDT => format!("0x{:x}: ld DT, V{:x}", pc, v1),
+            Instruction::LdST => format!("0x{:x}: ld ST, V{:x}", pc, v1),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

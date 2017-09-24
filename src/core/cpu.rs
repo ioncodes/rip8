@@ -1,6 +1,9 @@
+extern crate rand;
+
 use std::io::{self, Write, BufRead};
 use std::process;
 use std::panic;
+use self::rand::Rng;
 
 use super::ram::Ram;
 use super::rom::Rom;
@@ -84,8 +87,8 @@ impl Cpu {
             opcode = instr; // CHIP8 has 2 instructions starting with 00 which does not get parsed, so let's check for them manually.
         } else if opcode == 0x8000 {
             opcode = instr & 0xF00F; // The CHIP8 does also have a number of opcodes starting with 8, identifiable by the last nibble.
-        } else if opcode == 0xF000 {
-            opcode = instr & 0xF0FF; // CHIP8 has a series of opcodes which start with F, hence preserving the last byte make them identifiable.
+        } else if opcode == 0xF000 || opcode == 0xE000 {
+            opcode = instr & 0xF0FF; // CHIP8 has a series of opcodes which start with F and E, hence preserving the last byte make them identifiable.
         }
         let instruction = self.instructions.parse(opcode);
         let panic_pc = self.registers.pc.clone();
@@ -206,19 +209,21 @@ impl Cpu {
             },
             Instruction::RET => {
                 // return from subroutine
-                let addr = *self.registers.stack.first().unwrap();
                 self.print_debug_info(instruction, 0, 0, 0);
 
-                self.registers.jump(addr);
                 self.registers.sp -= 1;
+                let sp = self.registers.sp as usize;
+                let addr = self.registers.stack[sp];
+                self.registers.jump(addr);
+                self.registers.step();
             },
             Instruction::CALL => {
                 // call subroutine
                 let addr = self.instructions.parse_address(instr);
                 self.print_debug_info(instruction, addr, 0, 0);
 
+                self.registers.stack.insert(self.registers.sp as usize, self.registers.pc);
                 self.registers.sp += 1;
-                self.registers.stack.insert(0,  self.registers.pc);
                 self.registers.jump(addr);
             },
             Instruction::LdXY => {
@@ -253,6 +258,91 @@ impl Cpu {
                 self.ram.write(i, a);
                 self.ram.write(i + 1, b);
                 self.ram.write(i + 2, c);
+                self.registers.step();
+            },
+            Instruction::LdXI => {
+                // for 0..x => copy I+x to Vx
+                let x = self.instructions.parse_nibble(1, instr);
+                self.print_debug_info(instruction, x as u16, 0, 0);
+
+                let index = self.registers.i as usize;
+                for i in 0..x as usize {
+                    let byte = self.ram.read(index + i);
+                    self.registers.v[i] = byte as u8;
+                }
+                self.registers.step();
+            },
+            Instruction::LdF => {
+                // todo: implement this
+                let x = self.instructions.parse_nibble(1, instr);
+                self.print_debug_info(instruction, x as u16, 0, 0);
+
+                self.registers.step();
+            },
+            Instruction::RND => {
+                // generate random number between 0 and 255 and AND it with the last byte, store in x
+                let x = self.instructions.parse_nibble(1, instr);
+                let byte = self.instructions.parse_last(instr);
+                self.print_debug_info(instruction, x as u16, byte as u16, 0);
+
+                let rand = rand::thread_rng().gen_range(0, 255) as u8;
+                self.registers.v[x as usize] = rand & byte;
+                self.registers.step();
+            },
+            Instruction::AddXY => {
+                // Vx + Vy => Vx. Set carry if greater than 255 (8 bits)
+                let x = self.instructions.parse_nibble(1, instr);
+                let y = self.instructions.parse_nibble(2, instr);
+                self.print_debug_info(instruction, x as u16, y as u16, 0);
+
+                let vx = self.registers.v[x as usize] as u16;
+                let vy = self.registers.v[y as usize] as u16;
+                let mut r = vx + vy;
+                if r > 255 {
+                    self.registers.v[0xF] = 1;
+                    r -= 256;
+                } else {
+                    self.registers.v[0xF] = 0;
+                }
+                self.registers.v[x as usize] = r as u8;
+                self.registers.step();
+            },
+            Instruction::SKP => {
+                // skip if Key x is pressed.
+                let x = self.instructions.parse_nibble(1, instr);
+                self.print_debug_info(instruction, x as u16, 0, 0);
+
+                let vx = self.registers.v[x as usize];
+                if self.keyboard.pressed(vx) {
+                    self.registers.step();
+                }
+                self.registers.step();
+            },
+            Instruction::SKNP => {
+                // skip if Key x is pressed.
+                let x = self.instructions.parse_nibble(1, instr);
+                self.print_debug_info(instruction, x as u16, 0, 0);
+
+                let vx = self.registers.v[x as usize];
+                if !self.keyboard.pressed(vx) {
+                    self.registers.step();
+                }
+                self.registers.step();
+            },
+            Instruction::LdDT => {
+                let x = self.instructions.parse_nibble(1, instr);
+                self.print_debug_info(instruction, x as u16, 0, 0);
+
+                let vx = self.registers.v[x as usize];
+                self.registers.delay_timer = vx;
+                self.registers.step();
+            },
+            Instruction::LdST => {
+                let x = self.instructions.parse_nibble(1, instr);
+                self.print_debug_info(instruction, x as u16, 0, 0);
+
+                let vx = self.registers.v[x as usize];
+                self.registers.sound_timer = vx;
                 self.registers.step();
             },
             _ =>  {

@@ -15,5 +15,13 @@ pub enum Instruction {
     LdXY,
     SHR,
     LdB,
+    LdXI,
+    LdF,
+    RND,
+    AddXY,
+    SKP,
+    SKNP,
+    LdDT,
+    LdST,
     Unknown
 }

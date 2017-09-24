@@ -5,3 +5,4 @@ pub mod keyboard;
 pub mod instruction;
 pub mod instructions;
 pub mod rom;
+pub mod screen;

@@ -1,4 +1,8 @@
+use std::thread;
+
 const START_ADDRESS: u16 = 0x200; // todo: might also be 0x600
+pub static mut DELAY_TIMER: u8 = 0;
+pub static mut SOUND_TIMER: u8 = 0;
 
 #[derive(Debug, Clone)]
 pub struct Registers {
@@ -6,8 +10,6 @@ pub struct Registers {
     pub sp: u8,
     pub i: u16,
     pub v: [u8; 16], // V0 - VF
-    pub delay_timer: u8,
-    pub sound_timer: u8,
     pub stack: Vec<u16>
 }
 
@@ -18,8 +20,6 @@ impl Registers {
             sp: 0,
             i: 0,
             v: [0; 16],
-            delay_timer: 0,
-            sound_timer: 0,
             stack: Vec::new()
         }
     }
@@ -30,5 +30,31 @@ impl Registers {
 
     pub fn jump(&mut self, address: u16) {
         self.pc = address;
+    }
+
+    pub fn start_delay_timer(&self) {
+        // todo: 60Hz
+        thread::spawn(move || {
+            unsafe {
+                loop {
+                    if DELAY_TIMER > 0 {
+                        DELAY_TIMER -= 1;
+                    }
+                }
+            }
+        });
+    }
+
+    pub fn start_sound_timer(&self) {
+        // todo: 60Hz
+        thread::spawn(move || {
+            unsafe {
+                loop {
+                    if SOUND_TIMER > 0 {
+                        SOUND_TIMER -= 1;
+                    }
+                }
+            }
+        });
     }
 }

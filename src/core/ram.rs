@@ -20,4 +20,8 @@ impl Ram {
         let instruction: [u16; 2] = [self.ram[position] as u16, self.ram[position + 1] as u16];
         instruction[0] << 8 | instruction[1]
     }
+
+    pub fn read_byte(&mut self, position: usize) -> u8 {
+        self.ram[position]
+    }
 }

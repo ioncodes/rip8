@@ -8,9 +8,10 @@ use self::rand::Rng;
 use super::ram::Ram;
 use super::rom::Rom;
 use super::keyboard::Keyboard;
-use super::registers::Registers;
+use super::registers::{Registers, SOUND_TIMER, DELAY_TIMER};
 use super::instruction::Instruction;
 use super::instructions::Instructions;
+use super::screen::Screen;
 
 const FONT_SET: [u8; 80] = [
     0xF0, 0x90, 0x90, 0x90, 0xF0, //0
@@ -35,6 +36,7 @@ pub struct Cpu {
     ram: Ram,
     rom: Rom,
     pub keyboard: Keyboard,
+    pub screen: Screen,
     registers: Registers,
     instructions: Instructions,
     debug: bool,
@@ -50,6 +52,7 @@ impl Cpu {
             ram: Ram::new(),
             rom: Rom::new(rom),
             keyboard: Keyboard::new(),
+            screen: Screen::new(),
             registers: Registers::new(),
             instructions: Instructions::new(),
             debug,
@@ -73,6 +76,11 @@ impl Cpu {
         }
     }
 
+    pub fn init(&mut self) {
+        self.registers.start_delay_timer();
+        self.registers.start_sound_timer();
+    }
+
     pub fn tick(&mut self) {
         if !self.process_debugger() {
             return;
@@ -82,6 +90,7 @@ impl Cpu {
     }
 
     fn process_instruction(&mut self, instr: u16) {
+        // println!("0x{:X}: #{:X}", self.registers.pc, self.registers.v[2]);
         let mut opcode = instr & 0xF000;
         if instr == 0xE0 || instr == 0xEE {
             opcode = instr; // CHIP8 has 2 instructions starting with 00 which does not get parsed, so let's check for them manually.
@@ -91,14 +100,14 @@ impl Cpu {
             opcode = instr & 0xF0FF; // CHIP8 has a series of opcodes which start with F and E, hence preserving the last byte make them identifiable.
         }
         let instruction = self.instructions.parse(opcode);
-        let panic_pc = self.registers.pc.clone();
+        /*let panic_pc = self.registers.pc.clone();
         let panic_registers = self.registers.clone();
         panic::set_hook(Box::new(move |_| {
             println!("\nCPU panicked at 0x{:x}", panic_pc);
             println!("Memory dump at 0x{:x}: {:x}", panic_pc, instr);
             println!("Parsed instruction at 0x{:x}: {:?}", panic_pc, instruction);
             println!("Register dump at 0x{:x}: {:#?}", panic_pc, panic_registers);
-        }));
+        }));*/
         match instruction {
             Instruction::JP => {
                 // Jump to address
@@ -126,11 +135,29 @@ impl Cpu {
             },
             Instruction::DRW => {
                 // set pixels
-                let x = self.instructions.parse_nibble(1, instr) as usize;
-                let y = self.instructions.parse_nibble(2, instr) as usize;
+                let _x = self.instructions.parse_nibble(1, instr) as usize;
+                let _y = self.instructions.parse_nibble(2, instr) as usize;
                 let n = self.instructions.parse_nibble(3, instr) as usize;
-                self.print_debug_info(instruction, x as u16, y as u16, n as u16);
-                // todo: implement drawing and storing
+                self.print_debug_info(instruction, _x as u16, _y as u16, n as u16);
+
+                let vx = self.registers.v[_x] as usize;
+                let vy = self.registers.v[_y] as usize;
+                self.registers.v[0xF] = 0;
+
+                let index = self.registers.i as usize;
+                for y in 0..(n-1) {
+                    let pixel = self.ram.read_byte(index + y);
+                    for x in 0..8 {
+                        if pixel & (0x80 >> x) != 0 {
+                            let i = (vx + x + (vy + y) * 64) + 1;
+                            let coords = self.to_2d(i as i32);
+                            if self.screen.screen[coords[0] as usize][coords[1] as usize] == 1 {
+                                self.registers.v[0xF] = 1;
+                            }
+                            self.screen.screen[coords[0] as usize][coords[1] as usize] ^= 1;
+                        }
+                    }
+                }
 
                 self.registers.step();
             },
@@ -202,9 +229,9 @@ impl Cpu {
             },
             Instruction::CLS => {
                 // clear the screen
-                // todo: clear the screen
                 self.print_debug_info(instruction, 0, 0, 0);
 
+                self.screen.screen = [[0; 32]; 64];
                 self.registers.step();
             },
             Instruction::RET => {
@@ -266,17 +293,17 @@ impl Cpu {
                 self.print_debug_info(instruction, x as u16, 0, 0);
 
                 let index = self.registers.i as usize;
-                for i in 0..x as usize {
-                    let byte = self.ram.read(index + i);
-                    self.registers.v[i] = byte as u8;
+                for i in 0..(x + 1) as usize {
+                    let byte = self.ram.read_byte(index + i);
+                    self.registers.v[i] = byte;
                 }
                 self.registers.step();
             },
             Instruction::LdF => {
-                // todo: implement this
                 let x = self.instructions.parse_nibble(1, instr);
                 self.print_debug_info(instruction, x as u16, 0, 0);
 
+                self.registers.i = (self.registers.v[x as usize] * 0x05) as u16;
                 self.registers.step();
             },
             Instruction::RND => {
@@ -335,7 +362,9 @@ impl Cpu {
                 self.print_debug_info(instruction, x as u16, 0, 0);
 
                 let vx = self.registers.v[x as usize];
-                self.registers.delay_timer = vx;
+                unsafe {
+                    DELAY_TIMER = vx;
+                }
                 self.registers.step();
             },
             Instruction::LdST => {
@@ -344,7 +373,9 @@ impl Cpu {
                 self.print_debug_info(instruction, x as u16, 0, 0);
 
                 let vx = self.registers.v[x as usize];
-                self.registers.sound_timer = vx;
+                unsafe {
+                    SOUND_TIMER = vx;
+                }
                 self.registers.step();
             },
             Instruction::LdXDT => {
@@ -352,7 +383,9 @@ impl Cpu {
                 let x = self.instructions.parse_nibble(1, instr);
                 self.print_debug_info(instruction, x as u16, 0, 0);
 
-                self.registers.v[x as usize] = self.registers.delay_timer;
+                unsafe {
+                    self.registers.v[x as usize] = DELAY_TIMER;
+                }
                 self.registers.step();
             }
             _ =>  {
@@ -360,6 +393,29 @@ impl Cpu {
                 process::exit(0);
             }
         }
+    }
+
+    fn to_2d(&self, i: i32) -> [u8; 2] {
+        let mut r = -1;
+        let d = i % 64;
+        if d == 0 {
+            r = i;
+        } else {
+            r = 64 - d + i;
+        }
+        let mut y1 = r / 64;
+        let mut x1 = -1;
+        if i < 64 {
+            x1 = i;
+        } else {
+            x1 = d;
+        }
+        if x1 == 0 {
+            x1 = 64;
+        }
+        y1-=1;
+        x1-=1;
+        [ x1 as u8, y1 as u8]
     }
 
     fn print_debug_info(&self, instruction: Instruction, v1: u16, v2: u16, v3: u16) {
@@ -382,6 +438,10 @@ impl Cpu {
             buffer = buffer.trim_right_matches("\r\n").to_string();
             if buffer == "regdump" {
                 println!("{:#?}", self.registers);
+                unsafe {
+                    println!("delay_timer: {:#?}", DELAY_TIMER);
+                    println!("sound_timer: {:#?}", SOUND_TIMER);
+                }
                 return false;
             } else if buffer == "+input" {
                 self.keyboard.set(0);

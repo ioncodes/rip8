@@ -33,7 +33,7 @@ fn main() {
 
     let mut window = match Window::new("rip8", WIDTH, HEIGHT,
                                        WindowOptions {
-                                           resize: true,
+                                           resize: false,
                                            scale: Scale::X8,
                                            ..WindowOptions::default()
                                        }) {
@@ -134,8 +134,7 @@ fn main() {
 
         for y in 0..32 {
             for x in 0..64 {
-                // println!("{}: {},", y, screen[x][y]);
-                buffer[y * 64 + x] = (screen[x][y] as u32) * 255;
+                buffer[y * 64 + x] = (screen[x][y] as u32) * 0xFFFFFF;
             }
         }
 

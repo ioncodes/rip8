@@ -100,14 +100,14 @@ impl Cpu {
             Instruction::JP => {
                 // Jump to address
                 let addr = self.instructions.parse_address(instr);
-                self.print_debug_info(instruction, self.registers.pc, addr, 0, 0);
+                self.print_debug_info(instruction, addr, 0, 0);
 
                 self.registers.jump(addr as u16);
             },
             Instruction::LdI => {
                 // set index register to address
                 let addr = self.instructions.parse_address(instr);
-                self.print_debug_info(instruction, self.registers.pc, addr, 0, 0);
+                self.print_debug_info(instruction, addr, 0, 0);
 
                 self.registers.i = addr;
                 self.registers.step();
@@ -116,7 +116,7 @@ impl Cpu {
                 // set Vx to value
                 let x = self.instructions.parse_nibble(1, instr) as usize;
                 let value = self.instructions.parse_last(instr);
-                self.print_debug_info(instruction, self.registers.pc, x as u16, value as u16, 0);
+                self.print_debug_info(instruction, x as u16, value as u16, 0);
 
                 self.registers.v[x] = value;
                 self.registers.step();
@@ -126,7 +126,7 @@ impl Cpu {
                 let x = self.instructions.parse_nibble(1, instr) as usize;
                 let y = self.instructions.parse_nibble(2, instr) as usize;
                 let n = self.instructions.parse_nibble(3, instr) as usize;
-                self.print_debug_info(instruction, self.registers.pc, x as u16, y as u16, n as u16);
+                self.print_debug_info(instruction, x as u16, y as u16, n as u16);
                 // todo: implement drawing and storing
 
                 self.registers.step();
@@ -134,7 +134,7 @@ impl Cpu {
             Instruction::AddI => {
                 // add x to I
                 let x = self.instructions.parse_nibble(1, instr) as u16;
-                self.print_debug_info(instruction, self.registers.pc, x, 0, 0);
+                self.print_debug_info(instruction, x, 0, 0);
 
                 self.registers.i += x;
                 if self.registers.i > 0xFFF { // undocumented feature
@@ -148,7 +148,7 @@ impl Cpu {
                 // add byte to Vx
                 let x = self.instructions.parse_nibble(1, instr);
                 let byte = self.instructions.parse_last(instr);
-                self.print_debug_info(instruction, self.registers.pc, x as u16, byte as u16, 0);
+                self.print_debug_info(instruction, x as u16, byte as u16, 0);
 
                 let vx = self.registers.v[x as usize];
                 let mut r: u16 = vx as u16 + byte as u16;
@@ -162,7 +162,7 @@ impl Cpu {
                 // skip if Vx equals byte
                 let x = self.instructions.parse_nibble(1, instr);
                 let byte = self.instructions.parse_last(instr);
-                self.print_debug_info(instruction, self.registers.pc, x as u16, byte as u16, 0);
+                self.print_debug_info(instruction, x as u16, byte as u16, 0);
 
                 let vx = self.registers.v[x as usize];
 
@@ -175,7 +175,7 @@ impl Cpu {
                 // skip if Vx equals Vy
                 let x = self.instructions.parse_nibble(1, instr);
                 let y = self.instructions.parse_nibble(2, instr);
-                self.print_debug_info(instruction, self.registers.pc, x as u16, y as u16, 0);
+                self.print_debug_info(instruction, x as u16, y as u16, 0);
 
                 let vx = self.registers.v[x as usize];
                 let vy = self.registers.v[y as usize];
@@ -190,7 +190,7 @@ impl Cpu {
                 for i in 0..self.keyboard.keyboard.len() {
                     if self.keyboard.pressed(i as u8) {
                         let x = self.instructions.parse_nibble(1, instr);
-                        self.print_debug_info(instruction, self.registers.pc, x as u16, 0, 0); // todo: move this out of the if
+                        self.print_debug_info(instruction, x as u16, 0, 0); // todo: move this out of the if
 
                         self.registers.v[x as usize] = i as u8;
                         self.registers.step();
@@ -200,14 +200,14 @@ impl Cpu {
             Instruction::CLS => {
                 // clear the screen
                 // todo: clear the screen
-                self.print_debug_info(instruction, self.registers.pc, 0, 0, 0);
+                self.print_debug_info(instruction, 0, 0, 0);
 
                 self.registers.step();
             },
             Instruction::RET => {
                 // return from subroutine
                 let addr = *self.registers.stack.first().unwrap();
-                self.print_debug_info(instruction, self.registers.pc, 0, 0, 0);
+                self.print_debug_info(instruction, 0, 0, 0);
 
                 self.registers.jump(addr);
                 self.registers.sp -= 1;
@@ -215,7 +215,7 @@ impl Cpu {
             Instruction::CALL => {
                 // call subroutine
                 let addr = self.instructions.parse_address(instr);
-                self.print_debug_info(instruction, self.registers.pc, addr, 0, 0);
+                self.print_debug_info(instruction, addr, 0, 0);
 
                 self.registers.sp += 1;
                 self.registers.stack.insert(0,  self.registers.pc);
@@ -225,10 +225,19 @@ impl Cpu {
                 // load value of Vy into Vx
                 let x = self.instructions.parse_nibble(1, instr);
                 let y = self.instructions.parse_nibble(2, instr);
-                self.print_debug_info(instruction, self.registers.pc, x as u16, y as u16, 0);
+                self.print_debug_info(instruction, x as u16, y as u16, 0);
 
                 let vy = self.registers.v[y as usize];
                 self.registers.v[x as usize] = vy;
+                self.registers.step();
+            },
+            Instruction::SHR => {
+                // shift Vx right, bit 0 into VF
+                let x = self.instructions.parse_nibble(1, instr);
+                self.print_debug_info(instruction, x as u16, 0, 0);
+
+                self.registers.v[0xF] = x & 0x1;
+                self.registers.v[x as usize] >>= 1;
                 self.registers.step();
             },
             _ =>  {
@@ -238,9 +247,9 @@ impl Cpu {
         }
     }
 
-    fn print_debug_info(&self, instruction: Instruction, pc: u16, v1: u16, v2: u16, v3: u16) {
+    fn print_debug_info(&self, instruction: Instruction, v1: u16, v2: u16, v3: u16) {
         if self.debug {
-            let debug_info = self.instructions.get_debug_info(instruction, pc, v1, v2, v3);
+            let debug_info = self.instructions.get_debug_info(instruction, self.registers.pc, v1, v2, v3);
             println!("{}", debug_info);
         }
     }

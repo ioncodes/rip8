@@ -26,6 +26,7 @@ impl Instructions {
             0xEE => Instruction::RET,
             0x2000 => Instruction::CALL,
             0x8000 => Instruction::LdXY,
+            0x8006 => Instruction::SHR,
             _ => Instruction::Unknown
         }
     }
@@ -68,6 +69,7 @@ impl Instructions {
             Instruction::RET => format!("0x{:x}: ret", pc),
             Instruction::CALL => format!("0x{:x}: call #{:x}", pc, v1),
             Instruction::LdXY => format!("0x{:x}: ld V{:x}, V{:x}", pc, v1, v2),
+            Instruction::SHR => format!("0x{:x}: shr V{:x}", pc, v1),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

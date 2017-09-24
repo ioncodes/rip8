@@ -13,5 +13,6 @@ pub enum Instruction {
     RET,
     CALL,
     LdXY,
+    SHR,
     Unknown
 }

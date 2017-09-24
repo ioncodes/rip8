@@ -6,8 +6,8 @@ use std::env;
 use core::cpu::Cpu;
 use minifb::{Key, WindowOptions, Window, Scale};
 
-const WIDTH: usize = 640;
-const HEIGHT: usize = 360;
+const WIDTH: usize = 64;
+const HEIGHT: usize = 32;
 
 fn main() {
     let rom_path = env::args().nth(1).unwrap();
@@ -34,7 +34,7 @@ fn main() {
     let mut window = match Window::new("rip8", WIDTH, HEIGHT,
                                        WindowOptions {
                                            resize: true,
-                                           scale: Scale::X2,
+                                           scale: Scale::X8,
                                            ..WindowOptions::default()
                                        }) {
         Ok(win) => win,
@@ -130,11 +130,17 @@ fn main() {
         }
 
         cpu.tick();
+        let screen = cpu.screen.screen;
 
-        for i in buffer.iter_mut() {
-            *i = 0;
+        for y in 0..32 {
+            for x in 0..64 {
+                // println!("{}: {},", y, screen[x][y]);
+                buffer[y * 64 + x] = (screen[x][y] as u32) * 255;
+            }
         }
 
         window.update_with_buffer(&buffer).unwrap();
+
+        std::thread::sleep(std::time::Duration::new(0,1000));
     }
 }

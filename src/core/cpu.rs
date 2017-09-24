@@ -90,7 +90,6 @@ impl Cpu {
     }
 
     fn process_instruction(&mut self, instr: u16) {
-        // println!("0x{:X}: #{:X}", self.registers.pc, self.registers.v[2]);
         let mut opcode = instr & 0xF000;
         if instr == 0xE0 || instr == 0xEE {
             opcode = instr; // CHIP8 has 2 instructions starting with 00 which does not get parsed, so let's check for them manually.
@@ -100,14 +99,14 @@ impl Cpu {
             opcode = instr & 0xF0FF; // CHIP8 has a series of opcodes which start with F and E, hence preserving the last byte make them identifiable.
         }
         let instruction = self.instructions.parse(opcode);
-        /*let panic_pc = self.registers.pc.clone();
+        let panic_pc = self.registers.pc.clone();
         let panic_registers = self.registers.clone();
         panic::set_hook(Box::new(move |_| {
             println!("\nCPU panicked at 0x{:x}", panic_pc);
             println!("Memory dump at 0x{:x}: {:x}", panic_pc, instr);
             println!("Parsed instruction at 0x{:x}: {:?}", panic_pc, instruction);
             println!("Register dump at 0x{:x}: {:#?}", panic_pc, panic_registers);
-        }));*/
+        }));
         match instruction {
             Instruction::JP => {
                 // Jump to address
@@ -145,16 +144,25 @@ impl Cpu {
                 self.registers.v[0xF] = 0;
 
                 let index = self.registers.i as usize;
-                for y in 0..(n-1) {
-                    let pixel = self.ram.read_byte(index + y);
+                for y in 0..n {
+                    let row = self.ram.read_byte(index + y);
                     for x in 0..8 {
-                        if pixel & (0x80 >> x) != 0 {
-                            let i = (vx + x + (vy + y) * 64) + 1;
-                            let coords = self.to_2d(i as i32);
-                            if self.screen.screen[coords[0] as usize][coords[1] as usize] == 1 {
-                                self.registers.v[0xF] = 1;
-                            }
-                            self.screen.screen[coords[0] as usize][coords[1] as usize] ^= 1;
+                        let pos_x = (vx + x) % 64;
+                        let pos_y = (vy + y) % 32;
+                        let sprite_pixel = if row & 0x80 >> x != 0 {
+                            true
+                        } else {
+                            false
+                        };
+                        let pixel = if self.screen.screen[pos_x][pos_y] == 1 {
+                            true
+                        } else {
+                            false
+                        };
+                        let new_pixel = sprite_pixel ^ pixel;
+                        self.screen.screen[pos_x][pos_y] = new_pixel as u8;
+                        if pixel && sprite_pixel {
+                            self.registers.v[0xF] = 1;
                         }
                     }
                 }
@@ -163,10 +171,11 @@ impl Cpu {
             },
             Instruction::AddI => {
                 // add x to I
-                let x = self.instructions.parse_nibble(1, instr) as u16;
-                self.print_debug_info(instruction, x, 0, 0);
+                let x = self.instructions.parse_nibble(1, instr);
+                self.print_debug_info(instruction, x as u16, 0, 0);
 
-                self.registers.i += x;
+                let vx = self.registers.v[x as usize];
+                self.registers.i += vx as u16;
                 if self.registers.i > 0xFFF { // undocumented feature
                     self.registers.v[0xF] = 1;
                 } else {
@@ -387,35 +396,24 @@ impl Cpu {
                     self.registers.v[x as usize] = DELAY_TIMER;
                 }
                 self.registers.step();
-            }
+            },
+            Instruction::SneX => {
+                // skip if Vx != byte
+                let x = self.instructions.parse_nibble(1, instr);
+                let byte = self.instructions.parse_last(instr);
+                self.print_debug_info(instruction, x as u16, byte as u16, 0);
+
+                let vx = self.registers.v[x as usize];
+                if vx != byte {
+                    self.registers.step();
+                }
+                self.registers.step();
+            },
             _ =>  {
                 println!("Unknown instruction: 0x{:X}", instr);
                 process::exit(0);
             }
         }
-    }
-
-    fn to_2d(&self, i: i32) -> [u8; 2] {
-        let mut r = -1;
-        let d = i % 64;
-        if d == 0 {
-            r = i;
-        } else {
-            r = 64 - d + i;
-        }
-        let mut y1 = r / 64;
-        let mut x1 = -1;
-        if i < 64 {
-            x1 = i;
-        } else {
-            x1 = d;
-        }
-        if x1 == 0 {
-            x1 = 64;
-        }
-        y1-=1;
-        x1-=1;
-        [ x1 as u8, y1 as u8]
     }
 
     fn print_debug_info(&self, instruction: Instruction, v1: u16, v2: u16, v3: u16) {

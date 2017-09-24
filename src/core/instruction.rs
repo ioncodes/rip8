@@ -23,5 +23,6 @@ pub enum Instruction {
     SKNP,
     LdDT,
     LdST,
+    LdXDT,
     Unknown
 }

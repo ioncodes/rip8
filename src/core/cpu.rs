@@ -330,6 +330,7 @@ impl Cpu {
                 self.registers.step();
             },
             Instruction::LdDT => {
+                // set delay timer to Vx
                 let x = self.instructions.parse_nibble(1, instr);
                 self.print_debug_info(instruction, x as u16, 0, 0);
 
@@ -338,6 +339,7 @@ impl Cpu {
                 self.registers.step();
             },
             Instruction::LdST => {
+                // set sound timer to Vx
                 let x = self.instructions.parse_nibble(1, instr);
                 self.print_debug_info(instruction, x as u16, 0, 0);
 
@@ -345,6 +347,14 @@ impl Cpu {
                 self.registers.sound_timer = vx;
                 self.registers.step();
             },
+            Instruction::LdXDT => {
+                // set Vx to delay timer
+                let x = self.instructions.parse_nibble(1, instr);
+                self.print_debug_info(instruction, x as u16, 0, 0);
+
+                self.registers.v[x as usize] = self.registers.delay_timer;
+                self.registers.step();
+            }
             _ =>  {
                 println!("Unknown instruction: 0x{:X}", instr);
                 process::exit(0);

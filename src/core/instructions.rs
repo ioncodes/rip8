@@ -36,6 +36,7 @@ impl Instructions {
             0xE0A1 => Instruction::SKNP,
             0xF015 => Instruction::LdDT,
             0xF018 => Instruction::LdST,
+            0xF007 => Instruction::LdXDT,
             _ => Instruction::Unknown
         }
     }
@@ -88,6 +89,7 @@ impl Instructions {
             Instruction::SKNP => format!("0x{:x}: sknp V{:x}", pc, v1),
             Instruction::LdDT => format!("0x{:x}: ld DT, V{:x}", pc, v1),
             Instruction::LdST => format!("0x{:x}: ld ST, V{:x}", pc, v1),
+            Instruction::LdXDT => format!("0x{:x}: ld V{:x}, DT", pc, v1),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

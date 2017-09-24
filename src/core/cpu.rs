@@ -30,7 +30,7 @@ const FONT_SET: [u8; 80] = [
 pub struct Cpu {
     ram: Ram,
     rom: Rom,
-    keyboard: Keyboard,
+    pub keyboard: Keyboard,
     registers: Registers,
     instructions: Instructions,
     debug: bool,
@@ -71,7 +71,9 @@ impl Cpu {
         self.process_debugger();
         let instr = self.ram.read(self.registers.pc as usize);
         let mut opcode = instr & 0xF000;
-        if opcode == 0xF000 {
+        if instr == 0xE0 || instr == 0xEE {
+            opcode = instr; // CHIP8 has 2 instructions starting with 00 which does not get parsed, so let's check for them manually.
+        } else if opcode == 0xF000 {
             opcode = instr & 0xF0FF; // CHIP8 has a series of opcodes which start with F, hence preserving the last byte make them identifiable.
         }
         let instruction = self.instructions.parse(opcode);
@@ -165,6 +167,19 @@ impl Cpu {
                         self.registers.step();
                     }
                 }
+            },
+            Instruction::CLS => {
+                // todo: clear the screen
+                self.print_debug_info(instruction, self.registers.pc, 0, 0, 0);
+
+                self.registers.step();
+            },
+            Instruction::RET => {
+                let addr = *self.registers.stack.first().unwrap();
+                self.print_debug_info(instruction, self.registers.pc, 0, 0, 0);
+
+                self.registers.jump(addr);
+                self.registers.sp -= 1;
             },
             _ => panic!("Unknown instruction: 0x{:X}", instr)
         }

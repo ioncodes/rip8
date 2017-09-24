@@ -22,6 +22,8 @@ impl Instructions {
             0x3000 => Instruction::SeX,
             0x5000 => Instruction::SeXY,
             0xF00A => Instruction::LdXK,
+            0xE0 => Instruction::CLS,
+            0xEE => Instruction::RET,
             _ => Instruction::Unknown
         }
     }
@@ -60,6 +62,8 @@ impl Instructions {
             Instruction::SeX => format!("0x{:x}: se V{:x}, #{:x}", pc, v1, v2),
             Instruction::SeXY => format!("0x{:x}: se V{:x}, V{:x}", pc, v1, v2),
             Instruction::LdXK => format!("0x{:x}: ld V{:x}, K", pc, v1),
+            Instruction::CLS => format!("0x{:x}: cls", pc),
+            Instruction::RET => format!("0x{:x}: ret", pc),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

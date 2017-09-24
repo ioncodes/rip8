@@ -9,14 +9,12 @@ impl Keyboard {
         }
     }
 
-    pub fn set(&mut self, key: String) {
-        let index = usize::from_str_radix(&key, 16).unwrap();
-        self.keyboard[index] = true;
+    pub fn set(&mut self, key: u8) {
+        self.keyboard[key as usize] = true;
     }
 
-    pub fn unset(&mut self, key: String) {
-        let index = usize::from_str_radix(&key, 16).unwrap();
-        self.keyboard[index] = false;
+    pub fn unset(&mut self, key: u8) {
+        self.keyboard[key as usize] = false;
     }
 
     pub fn pressed(&self, key: u8) -> bool {

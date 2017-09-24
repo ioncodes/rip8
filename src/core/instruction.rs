@@ -9,5 +9,7 @@ pub enum Instruction {
     AddX,
     SeX,    // swiggity swooty,
     SeXY,   // i'm coming for that booty.
+    CLS,
+    RET,
     Unknown
 }

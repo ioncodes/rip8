@@ -24,6 +24,8 @@ impl Instructions {
             0xF00A => Instruction::LdXK,
             0xE0 => Instruction::CLS,
             0xEE => Instruction::RET,
+            0x2000 => Instruction::CALL,
+            0x8000 => Instruction::LdXY,
             _ => Instruction::Unknown
         }
     }
@@ -64,6 +66,8 @@ impl Instructions {
             Instruction::LdXK => format!("0x{:x}: ld V{:x}, K", pc, v1),
             Instruction::CLS => format!("0x{:x}: cls", pc),
             Instruction::RET => format!("0x{:x}: ret", pc),
+            Instruction::CALL => format!("0x{:x}: call #{:x}", pc, v1),
+            Instruction::LdXY => format!("0x{:x}: ld V{:x}, V{:x}", pc, v1, v2),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

@@ -11,5 +11,7 @@ pub enum Instruction {
     SeXY,   // i'm coming for that booty.
     CLS,
     RET,
+    CALL,
+    LdXY,
     Unknown
 }

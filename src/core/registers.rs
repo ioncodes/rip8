@@ -1,6 +1,6 @@
 const START_ADDRESS: u16 = 0x200; // todo: might also be 0x600
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Registers {
     pub pc: u16,
     pub sp: u8,
@@ -8,7 +8,7 @@ pub struct Registers {
     pub v: [u8; 16], // V0 - VF
     pub delay_timer: u8,
     pub sound_timer: u8,
-    pub stack: [u16; 16]
+    pub stack: Vec<u16>
 }
 
 impl Registers {
@@ -20,7 +20,7 @@ impl Registers {
             v: [0; 16],
             delay_timer: 0,
             sound_timer: 0,
-            stack: [0; 16]
+            stack: Vec::new()
         }
     }
 

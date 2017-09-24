@@ -1,5 +1,6 @@
-use std::io::{self, Read, Write, BufRead};
+use std::io::{self, Write, BufRead};
 use std::process;
+use std::panic;
 
 use super::ram::Ram;
 use super::rom::Rom;
@@ -73,10 +74,20 @@ impl Cpu {
         let mut opcode = instr & 0xF000;
         if instr == 0xE0 || instr == 0xEE {
             opcode = instr; // CHIP8 has 2 instructions starting with 00 which does not get parsed, so let's check for them manually.
+        } else if opcode == 0x8000 {
+            opcode & 0xF00F; // The CHIP8 does also have a number of opcodes starting with 8, identifiable by the last nibble.
         } else if opcode == 0xF000 {
             opcode = instr & 0xF0FF; // CHIP8 has a series of opcodes which start with F, hence preserving the last byte make them identifiable.
         }
         let instruction = self.instructions.parse(opcode);
+        let panic_pc = self.registers.pc.clone();
+        let panic_registers = self.registers.clone();
+        panic::set_hook(Box::new(move |_| {
+            println!("\nCPU panicked at 0x{:x}", panic_pc);
+            println!("Memory dump at 0x{:x}: {:x}", panic_pc, instr);
+            println!("Parsed instruction at 0x{:x}: {:?}", panic_pc, instruction);
+            println!("Register dump at 0x{:x}: {:#?}", panic_pc, panic_registers);
+        }));
         match instruction {
             Instruction::JP => {
                 // Jump to address
@@ -169,17 +180,38 @@ impl Cpu {
                 }
             },
             Instruction::CLS => {
+                // clear the screen
                 // todo: clear the screen
                 self.print_debug_info(instruction, self.registers.pc, 0, 0, 0);
 
                 self.registers.step();
             },
             Instruction::RET => {
+                // return from subroutine
                 let addr = *self.registers.stack.first().unwrap();
                 self.print_debug_info(instruction, self.registers.pc, 0, 0, 0);
 
                 self.registers.jump(addr);
                 self.registers.sp -= 1;
+            },
+            Instruction::CALL => {
+                // call subroutine
+                let addr = self.instructions.parse_address(instr);
+                self.print_debug_info(instruction, self.registers.pc, addr, 0, 0);
+
+                self.registers.sp += 1;
+                self.registers.stack.insert(0,  self.registers.pc);
+                self.registers.jump(addr);
+            },
+            Instruction::LdXY => {
+                // load value of Vy into Vx
+                let x = self.instructions.parse_nibble(1, instr);
+                let y = self.instructions.parse_nibble(2, instr);
+                self.print_debug_info(instruction, self.registers.pc, x as u16, y as u16, 0);
+
+                let vy = self.registers.v[y as usize];
+                self.registers.v[x as usize] = vy;
+                self.registers.step();
             },
             _ => panic!("Unknown instruction: 0x{:X}", instr)
         }
@@ -210,7 +242,6 @@ impl Cpu {
             }
         } else if self.test {
             if self.registers.pc == self.test_pc {
-                println!("{:#?}", self.registers);
                 process::exit(1337);
             }
         }

@@ -36,12 +36,13 @@ pub struct Cpu {
     instructions: Instructions,
     debug: bool,
     interactive: bool,
-    test: bool,
-    test_pc: u16
+    debug_break: bool,
+    break_point: u16,
+    debug_run: bool
 }
 
 impl Cpu {
-    pub fn new(rom: String, debug: bool, interactive: bool, test: bool, test_pc: u16) -> Cpu {
+    pub fn new(rom: String, debug: bool, interactive: bool) -> Cpu {
         Cpu {
             ram: Ram::new(),
             rom: Rom::new(rom),
@@ -50,8 +51,9 @@ impl Cpu {
             instructions: Instructions::new(),
             debug,
             interactive,
-            test,
-            test_pc
+            debug_break: false,
+            break_point: 0,
+            debug_run: false
         }
     }
 
@@ -69,13 +71,19 @@ impl Cpu {
     }
 
     pub fn tick(&mut self) {
-        self.process_debugger();
+        if !self.process_debugger() {
+            return;
+        }
         let instr = self.ram.read(self.registers.pc as usize);
+        self.process_instruction(instr);
+    }
+
+    fn process_instruction(&mut self, instr: u16) {
         let mut opcode = instr & 0xF000;
         if instr == 0xE0 || instr == 0xEE {
             opcode = instr; // CHIP8 has 2 instructions starting with 00 which does not get parsed, so let's check for them manually.
         } else if opcode == 0x8000 {
-            opcode & 0xF00F; // The CHIP8 does also have a number of opcodes starting with 8, identifiable by the last nibble.
+            opcode = instr & 0xF00F; // The CHIP8 does also have a number of opcodes starting with 8, identifiable by the last nibble.
         } else if opcode == 0xF000 {
             opcode = instr & 0xF0FF; // CHIP8 has a series of opcodes which start with F, hence preserving the last byte make them identifiable.
         }
@@ -129,6 +137,11 @@ impl Cpu {
                 self.print_debug_info(instruction, self.registers.pc, x, 0, 0);
 
                 self.registers.i += x;
+                if self.registers.i > 0xFFF { // undocumented feature
+                    self.registers.v[0xF] = 1;
+                } else {
+                    self.registers.v[0xF] = 0;
+                }
                 self.registers.step();
             },
             Instruction::AddX => {
@@ -137,7 +150,12 @@ impl Cpu {
                 let byte = self.instructions.parse_last(instr);
                 self.print_debug_info(instruction, self.registers.pc, x as u16, byte as u16, 0);
 
-                self.registers.v[x as usize] += byte;
+                let vx = self.registers.v[x as usize];
+                let mut r: u16 = vx as u16 + byte as u16;
+                if r > 255 {
+                    r -= 256;
+                }
+                self.registers.v[x as usize] = r as u8;
                 self.registers.step();
             },
             Instruction::SeX => {
@@ -213,7 +231,10 @@ impl Cpu {
                 self.registers.v[x as usize] = vy;
                 self.registers.step();
             },
-            _ => panic!("Unknown instruction: 0x{:X}", instr)
+            _ =>  {
+                println!("Unknown instruction: 0x{:X}", instr);
+                process::exit(0);
+            }
         }
     }
 
@@ -224,26 +245,57 @@ impl Cpu {
         }
     }
 
-    fn process_debugger(&self) {
-        if self.interactive {
+    fn process_debugger(&mut self) -> bool {
+        if self.interactive || self.debug_run {
+            if self.debug_run && self.registers.pc != self.break_point {
+                return true;
+            }
             io::stdout().write("$ ".as_bytes());
             io::stdout().flush();
             let mut buffer = String::new();
             let stdin = io::stdin();
             stdin.lock().read_line(&mut buffer).expect("Could not read line.");
             buffer = buffer.trim_right_matches("\r\n").to_string();
-            if buffer == "dump" {
+            if buffer == "regdump" {
                 println!("{:#?}", self.registers);
-                return;
+                return false;
+            } else if buffer == "+input" {
+                self.keyboard.set(0);
+                return false;
+            } else if buffer == "-input" {
+                self.keyboard.unset(0);
+                return false;
+            } else if buffer == "memdump" {
+                let instr = self.ram.read(self.registers.pc as usize);
+                println!("{:X}", instr);
+                return false;
+            } else if buffer.starts_with("break ") {
+                let break_point = buffer.replace("break ", "");
+                self.break_point = u16::from_str_radix(&break_point, 16).unwrap();
+                self.debug_break = true;
+                return false;
+            } else if buffer == "break" {
+                self.debug_break = false;
+                return false;
+            } else if buffer == "run" {
+                self.debug_run = true;
+                return true;
             } else if buffer == "help" {
-                println!("{}", "dump: dump registers");
+                println!("{}", "regdump: dump registers");
+                println!("{}", "memdump: dump memory");
+                println!("{}", "break <addr>: set breakpoint at address");
+                println!("{}", "break: disable breakpoint");
+                println!("{}", "run: run until breakpoint");
+                println!("{}", "+input: simulate keydown");
+                println!("{}", "-input: simulate keyup");
                 println!("{}", "help: this message");
                 println!("{}", "anything else: step into");
+                return false;
+            } else {
+                return true;
             }
-        } else if self.test {
-            if self.registers.pc == self.test_pc {
-                process::exit(1337);
-            }
+        } else {
+            return true;
         }
     }
 }

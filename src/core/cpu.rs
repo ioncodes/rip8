@@ -240,6 +240,21 @@ impl Cpu {
                 self.registers.v[x as usize] >>= 1;
                 self.registers.step();
             },
+            Instruction::LdB => {
+                // Store BCD of Vx in I, I+1 and I+2
+                let x = self.instructions.parse_nibble(1, instr);
+                self.print_debug_info(instruction, x as u16, 0, 0);
+
+                let vx = self.registers.v[x as usize];
+                let a = vx / 100;
+                let b = (vx / 10) % 10;
+                let c = (vx % 100) % 10;
+                let i = self.registers.i as usize;
+                self.ram.write(i, a);
+                self.ram.write(i + 1, b);
+                self.ram.write(i + 2, c);
+                self.registers.step();
+            },
             _ =>  {
                 println!("Unknown instruction: 0x{:X}", instr);
                 process::exit(0);

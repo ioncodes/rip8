@@ -14,5 +14,6 @@ pub enum Instruction {
     CALL,
     LdXY,
     SHR,
+    LdB,
     Unknown
 }

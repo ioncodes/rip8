@@ -99,14 +99,14 @@ impl Cpu {
             opcode = instr & 0xF0FF; // CHIP8 has a series of opcodes which start with F and E, hence preserving the last byte make them identifiable.
         }
         let instruction = self.instructions.parse(opcode);
-        /*let panic_pc = self.registers.pc.clone();
+        let panic_pc = self.registers.pc.clone();
         let panic_registers = self.registers.clone();
         panic::set_hook(Box::new(move |_| {
             println!("\nCPU panicked at 0x{:x}", panic_pc);
             println!("Memory dump at 0x{:x}: {:x}", panic_pc, instr);
             println!("Parsed instruction at 0x{:x}: {:?}", panic_pc, instruction);
             println!("Register dump at 0x{:x}: {:#?}", panic_pc, panic_registers);
-        }));*/
+        }));
         match instruction {
             Instruction::JP => {
                 // Jump to address

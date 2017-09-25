@@ -1,8 +1,12 @@
+#[macro_use]
+extern crate lazy_static;
 extern crate minifb;
+extern crate time;
 
 mod core;
 
 use std::env;
+use std::thread;
 use core::cpu::Cpu;
 use minifb::{Key, WindowOptions, Window, Scale};
 
@@ -44,7 +48,11 @@ fn main() {
         }
     };
 
+    let mut task_time = 0;
+    let sleep_time: i32 = 1000/500;
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
+        task_time = time::now().tm_sec * 1000;
         {
             // todo: redo this.
             if window.is_key_down(Key::Key1) {
@@ -140,6 +148,9 @@ fn main() {
 
         window.update_with_buffer(&buffer).unwrap();
 
-        std::thread::sleep(std::time::Duration::new(0,1000));
+        task_time = (time::now().tm_sec * 1000) - task_time;
+        if sleep_time - task_time > 0 {
+            thread::sleep_ms((sleep_time - task_time) as u32);
+        }
     }
 }

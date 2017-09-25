@@ -38,7 +38,7 @@ impl Instructions {
             0xF018 => Instruction::LdST,
             0xF007 => Instruction::LdXDT,
             0x4000 => Instruction::SneX,
-            // 0x9000 => Instruction::SneXY, todo: implement this
+            0x9000 => Instruction::SneXY,
             _ => Instruction::Unknown
         }
     }
@@ -93,6 +93,7 @@ impl Instructions {
             Instruction::LdST => format!("0x{:x}: ld ST, V{:x}", pc, v1),
             Instruction::LdXDT => format!("0x{:x}: ld V{:x}, DT", pc, v1),
             Instruction::SneX => format!("0x{:x}: sne V{:x}, B", pc, v1),
+            Instruction::SneXY => format!("0x{:x}: sne V{:x}, V{:x}", pc, v1, v2),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

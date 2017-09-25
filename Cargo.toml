@@ -7,3 +7,4 @@ authors = ["ion <ionix@protonmail.com>"]
 minifb = "0.10.0"
 rand = "0.3"
 time = "0.1"
+lazy_static = "0.2"

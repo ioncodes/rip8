@@ -99,14 +99,14 @@ impl Cpu {
             opcode = instr & 0xF0FF; // CHIP8 has a series of opcodes which start with F and E, hence preserving the last byte make them identifiable.
         }
         let instruction = self.instructions.parse(opcode);
-        let panic_pc = self.registers.pc.clone();
+        /*let panic_pc = self.registers.pc.clone();
         let panic_registers = self.registers.clone();
         panic::set_hook(Box::new(move |_| {
             println!("\nCPU panicked at 0x{:x}", panic_pc);
             println!("Memory dump at 0x{:x}: {:x}", panic_pc, instr);
             println!("Parsed instruction at 0x{:x}: {:?}", panic_pc, instruction);
             println!("Register dump at 0x{:x}: {:#?}", panic_pc, panic_registers);
-        }));
+        }));*/
         match instruction {
             Instruction::JP => {
                 // Jump to address
@@ -372,7 +372,8 @@ impl Cpu {
 
                 let vx = self.registers.v[x as usize];
                 unsafe {
-                    DELAY_TIMER = vx;
+                    let mut dt = DELAY_TIMER.lock().unwrap();
+                    *dt = vx;
                 }
                 self.registers.step();
             },
@@ -383,7 +384,8 @@ impl Cpu {
 
                 let vx = self.registers.v[x as usize];
                 unsafe {
-                    SOUND_TIMER = vx;
+                    let mut st = SOUND_TIMER.lock().unwrap();
+                    *st = vx;
                 }
                 self.registers.step();
             },
@@ -393,7 +395,8 @@ impl Cpu {
                 self.print_debug_info(instruction, x as u16, 0, 0);
 
                 unsafe {
-                    self.registers.v[x as usize] = DELAY_TIMER;
+                    let mut dt = DELAY_TIMER.lock().unwrap();
+                    self.registers.v[x as usize] = *dt;
                 }
                 self.registers.step();
             },
@@ -405,6 +408,19 @@ impl Cpu {
 
                 let vx = self.registers.v[x as usize];
                 if vx != byte {
+                    self.registers.step();
+                }
+                self.registers.step();
+            },
+            Instruction::SneXY => {
+                // skip if Vx != Vy
+                let x = self.instructions.parse_nibble(1, instr);
+                let y = self.instructions.parse_nibble(2, instr);
+                self.print_debug_info(instruction, x as u16, y as u16, 0);
+
+                let vx = self.registers.v[x as usize];
+                let vy = self.registers.v[y as usize];
+                if vx != vy {
                     self.registers.step();
                 }
                 self.registers.step();
@@ -437,8 +453,10 @@ impl Cpu {
             if buffer == "regdump" {
                 println!("{:#?}", self.registers);
                 unsafe {
-                    println!("delay_timer: {:#?}", DELAY_TIMER);
-                    println!("sound_timer: {:#?}", SOUND_TIMER);
+                    let mut dt = DELAY_TIMER.lock().unwrap();
+                    let mut st = SOUND_TIMER.lock().unwrap();
+                    println!("delay_timer: {:#?}", *dt);
+                    println!("sound_timer: {:#?}", *st);
                 }
                 return false;
             } else if buffer == "+input" {

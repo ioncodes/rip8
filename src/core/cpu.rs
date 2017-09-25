@@ -464,6 +464,39 @@ impl Cpu {
                 self.registers.v[x] &= self.registers.v[y];
                 self.registers.step();
             },
+            Instruction::SUB => {
+                // Vx -= Vy, set VF
+                let x = self.instructions.parse_nibble(1, instr) as usize;
+                let y = self.instructions.parse_nibble(2, instr) as usize;
+                self.print_debug_info(instruction, x as u16, y as u16, 0);
+
+                if self.registers.v[x] > self.registers.v[y] {
+                    self.registers.v[0xF] = 1;
+                } else {
+                    self.registers.v[0xF] = 0;
+                }
+                let mut r = self.registers.v[x] as i16 - self.registers.v[y] as i16;
+                if r < 0 {
+                    r = 255 - ((0 - r) * -1);
+                }
+                //self.registers.v[x] -= self.registers.v[y];
+                self.registers.v[x] = r as u8;
+                self.registers.step();
+            },
+            Instruction::SUBN => {
+                // Vy -= Vx, set VF
+                let x = self.instructions.parse_nibble(1, instr) as usize;
+                let y = self.instructions.parse_nibble(2, instr) as usize;
+                self.print_debug_info(instruction, x as u16, y as u16, 0);
+
+                if self.registers.v[y] > self.registers.v[x] {
+                    self.registers.v[0xF] = 1;
+                } else {
+                    self.registers.v[0xF] = 0;
+                }
+                self.registers.v[y] -= self.registers.v[x];
+                self.registers.step();
+            },
             _ =>  {
                 println!("Unknown instruction: 0x{:X}", instr);
                 process::exit(0);

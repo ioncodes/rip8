@@ -30,5 +30,7 @@ pub enum Instruction {
     AND,
     OR,
     XOR,
+    SUB,
+    SUBN,
     Unknown
 }

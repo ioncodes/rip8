@@ -43,6 +43,8 @@ impl Instructions {
             0x8001 => Instruction::OR,
             0x8002 => Instruction::AND,
             0x8003 => Instruction::XOR,
+            0x8005 => Instruction::SUB,
+            0x8007 => Instruction::SUBN,
             _ => Instruction::Unknown
         }
     }
@@ -102,6 +104,8 @@ impl Instructions {
             Instruction::OR => format!("0x{:x}: or V{:x}, V{:x}", pc, v1, v2),
             Instruction::XOR => format!("0x{:x}: xor V{:x}, V{:x}", pc, v1, v2),
             Instruction::AND => format!("0x{:x}: and V{:x}, V{:x}", pc, v1, v2),
+            Instruction::SUB => format!("0x{:x}: sub V{:x}, V{:x}", pc, v1, v2),
+            Instruction::SUBN => format!("0x{:x}: subn V{:x}, V{:x}", pc, v1, v2),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

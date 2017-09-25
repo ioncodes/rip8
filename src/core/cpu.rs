@@ -425,6 +425,45 @@ impl Cpu {
                 }
                 self.registers.step();
             },
+            Instruction::LdIX => {
+                // store V0-Vx in memory[i+x]
+                let x = self.instructions.parse_nibble(1, instr);
+                self.print_debug_info(instruction, x as u16, 0, 0);
+
+                let index = self.registers.i as usize;
+                for i in 0..x as usize{
+                    let vx = self.registers.v[x as usize];
+                    self.ram.write(index + i, vx);
+                }
+                self.registers.step();
+            },
+            Instruction::OR => {
+                // Vx |= Vy
+                let x = self.instructions.parse_nibble(1, instr) as usize;
+                let y = self.instructions.parse_nibble(2, instr) as usize;
+                self.print_debug_info(instruction, x as u16, y as u16, 0);
+
+                self.registers.v[x] |= self.registers.v[y];
+                self.registers.step();
+            },
+            Instruction::XOR => {
+                // Vx ^= Vy
+                let x = self.instructions.parse_nibble(1, instr) as usize;
+                let y = self.instructions.parse_nibble(2, instr) as usize;
+                self.print_debug_info(instruction, x as u16, y as u16, 0);
+
+                self.registers.v[x] ^= self.registers.v[y];
+                self.registers.step();
+            },
+            Instruction::AND => {
+                // Vx &= Vy
+                let x = self.instructions.parse_nibble(1, instr) as usize;
+                let y = self.instructions.parse_nibble(2, instr) as usize;
+                self.print_debug_info(instruction, x as u16, y as u16, 0);
+
+                self.registers.v[x] &= self.registers.v[y];
+                self.registers.step();
+            },
             _ =>  {
                 println!("Unknown instruction: 0x{:X}", instr);
                 process::exit(0);

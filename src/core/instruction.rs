@@ -26,5 +26,9 @@ pub enum Instruction {
     LdXDT,
     SneX,
     SneXY,
+    LdIX,
+    AND,
+    OR,
+    XOR,
     Unknown
 }

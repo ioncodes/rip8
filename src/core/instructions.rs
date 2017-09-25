@@ -39,6 +39,10 @@ impl Instructions {
             0xF007 => Instruction::LdXDT,
             0x4000 => Instruction::SneX,
             0x9000 => Instruction::SneXY,
+            0xF055 => Instruction::LdIX,
+            0x8001 => Instruction::OR,
+            0x8002 => Instruction::AND,
+            0x8003 => Instruction::XOR,
             _ => Instruction::Unknown
         }
     }
@@ -94,6 +98,10 @@ impl Instructions {
             Instruction::LdXDT => format!("0x{:x}: ld V{:x}, DT", pc, v1),
             Instruction::SneX => format!("0x{:x}: sne V{:x}, B", pc, v1),
             Instruction::SneXY => format!("0x{:x}: sne V{:x}, V{:x}", pc, v1, v2),
+            Instruction::LdIX => format!("0x{:x}: ld [I], V{:x}", pc, v1),
+            Instruction::OR => format!("0x{:x}: or V{:x}, V{:x}", pc, v1, v2),
+            Instruction::XOR => format!("0x{:x}: xor V{:x}, V{:x}", pc, v1, v2),
+            Instruction::AND => format!("0x{:x}: and V{:x}, V{:x}", pc, v1, v2),
             _ => format!("0x{:x}: Unknown", pc)
         }
     }

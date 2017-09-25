@@ -371,10 +371,8 @@ impl Cpu {
                 self.print_debug_info(instruction, x as u16, 0, 0);
 
                 let vx = self.registers.v[x as usize];
-                unsafe {
-                    let mut dt = DELAY_TIMER.lock().unwrap();
-                    *dt = vx;
-                }
+                let mut dt = DELAY_TIMER.lock().unwrap();
+                *dt = vx;
                 self.registers.step();
             },
             Instruction::LdST => {
@@ -383,10 +381,8 @@ impl Cpu {
                 self.print_debug_info(instruction, x as u16, 0, 0);
 
                 let vx = self.registers.v[x as usize];
-                unsafe {
-                    let mut st = SOUND_TIMER.lock().unwrap();
-                    *st = vx;
-                }
+                let mut st = SOUND_TIMER.lock().unwrap();
+                *st = vx;
                 self.registers.step();
             },
             Instruction::LdXDT => {
@@ -394,10 +390,8 @@ impl Cpu {
                 let x = self.instructions.parse_nibble(1, instr);
                 self.print_debug_info(instruction, x as u16, 0, 0);
 
-                unsafe {
-                    let mut dt = DELAY_TIMER.lock().unwrap();
-                    self.registers.v[x as usize] = *dt;
-                }
+                let dt = DELAY_TIMER.lock().unwrap();
+                self.registers.v[x as usize] = *dt;
                 self.registers.step();
             },
             Instruction::SneX => {
@@ -516,20 +510,18 @@ impl Cpu {
             if self.debug_run && self.registers.pc != self.break_point {
                 return true;
             }
-            io::stdout().write("$ ".as_bytes());
-            io::stdout().flush();
+            let _ = io::stdout().write("$ ".as_bytes());
+            let _ = io::stdout().flush();
             let mut buffer = String::new();
             let stdin = io::stdin();
             stdin.lock().read_line(&mut buffer).expect("Could not read line.");
             buffer = buffer.trim_right_matches("\r\n").to_string();
             if buffer == "regdump" {
                 println!("{:#?}", self.registers);
-                unsafe {
-                    let mut dt = DELAY_TIMER.lock().unwrap();
-                    let mut st = SOUND_TIMER.lock().unwrap();
-                    println!("delay_timer: {:#?}", *dt);
-                    println!("sound_timer: {:#?}", *st);
-                }
+                let dt = DELAY_TIMER.lock().unwrap();
+                let st = SOUND_TIMER.lock().unwrap();
+                println!("delay_timer: {:#?}", *dt);
+                println!("sound_timer: {:#?}", *st);
                 return false;
             } else if buffer == "+input" {
                 self.keyboard.set(0);

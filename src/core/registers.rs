@@ -63,17 +63,15 @@ impl Registers {
         thread::spawn(move || {
             let mut task_time = 0;
             let sleep_time: i32 = 1000/REFRESH_RATE;
-            unsafe {
-                loop {
-                    let mut dt = DELAY_TIMER.lock().unwrap();
-                    if *dt > 0 {
-                        task_time = time::now().tm_sec * 1000;
-                        *dt -= 1;
-                        drop(dt); // As long as the Mutex is locked, other code accessing it gets blocked. So let's just release it manually before the sleep.
-                        task_time = (time::now().tm_sec * 1000) - task_time;
-                        if sleep_time - task_time > 0 {
-                            thread::sleep_ms((sleep_time - task_time) as u32);
-                        }
+            loop {
+                let mut dt = DELAY_TIMER.lock().unwrap();
+                if *dt > 0 {
+                    task_time = time::now().tm_sec * 1000;
+                    *dt -= 1;
+                    drop(dt); // As long as the Mutex is locked, other code accessing it gets blocked. So let's just release it manually before the sleep.
+                    task_time = (time::now().tm_sec * 1000) - task_time;
+                    if sleep_time - task_time > 0 {
+                        thread::sleep_ms((sleep_time - task_time) as u32);
                     }
                 }
             }
@@ -102,21 +100,19 @@ impl Registers {
             }).unwrap();
             let mut task_time = 0;
             let sleep_time: i32 = 1000/REFRESH_RATE;
-            unsafe {
-                loop {
-                    let mut st = SOUND_TIMER.lock().unwrap();
-                    if *st > 0 {
-                        task_time = time::now().tm_sec * 1000;
-                        device.resume();
-                        *st -= 1;
-                        drop(st); // As long as the Mutex is locked, other code accessing it gets blocked. So let's just release it manually before the sleep.
-                        task_time = (time::now().tm_sec * 1000) - task_time;
-                        if sleep_time - task_time > 0 {
-                            thread::sleep_ms((sleep_time - task_time) as u32);
-                        }
-                    } else {
-                        device.pause();
+            loop {
+                let mut st = SOUND_TIMER.lock().unwrap();
+                if *st > 0 {
+                    task_time = time::now().tm_sec * 1000;
+                    device.resume();
+                    *st -= 1;
+                    drop(st); // As long as the Mutex is locked, other code accessing it gets blocked. So let's just release it manually before the sleep.
+                    task_time = (time::now().tm_sec * 1000) - task_time;
+                    if sleep_time - task_time > 0 {
+                        thread::sleep_ms((sleep_time - task_time) as u32);
                     }
+                } else {
+                    device.pause();
                 }
             }
         });
